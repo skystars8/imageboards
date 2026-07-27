@@ -2,37 +2,23 @@
 declare(strict_types=1);
 
 /**
- * View a single thread – PHP 8.5+ compatible, original reply layout restored
+ * View a single thread – PHP 8.5+ compatible
+ * - No "File: xxx" line
+ * - Placeholders on the reply form
+ * - Logo returns to main board
  */
 
-/**
- * Extract meta fields safely
- */
 function parse_meta_line(string $line): array
 {
     $line = trim(str_replace(['[', ']'], '', $line));
-    $out = [
-        'name'    => '',
-        'date'    => '',
-        'title'   => '',
-        'include' => '',
-    ];
-    if (preg_match('/name="([^"]*)"/', $line, $m)) {
-        $out['name'] = $m[1];
-    }
-    if (preg_match('/date="([^"]*)"/', $line, $m)) {
-        $out['date'] = $m[1];
-    }
-    if (preg_match('/title="([^"]*)"/', $line, $m)) {
-        $out['title'] = $m[1];
-    }
-    if (preg_match('/include="([^"]*)"/', $line, $m)) {
-        $out['include'] = $m[1];
-    }
+    $out = ['name' => '', 'date' => '', 'title' => '', 'include' => ''];
+    if (preg_match('/name="([^"]*)"/', $line, $m))   $out['name']    = $m[1];
+    if (preg_match('/date="([^"]*)"/', $line, $m))   $out['date']    = $m[1];
+    if (preg_match('/title="([^"]*)"/', $line, $m))  $out['title']   = $m[1];
+    if (preg_match('/include="([^"]*)"/', $line, $m)) $out['include'] = $m[1];
     return $out;
 }
 
-// Original URLs look like thread.php?=123
 $id = '';
 if (isset($_GET['']) && is_string($_GET[''])) {
     $id = preg_replace('/[^0-9]/', '', $_GET['']) ?? '';
@@ -63,11 +49,12 @@ if (!is_file($threadlink)) {
 <body>
   <div id="boardsection"></div>
   <a href="index.php"><img src="static/logo.png" id="logo" alt="Krila"></a><br>
+
   <div id="threadcreate">
     <form enctype="multipart/form-data" action="postcomment.php" method="post">
-      <input type="text" name="name" id="name"><label id="threadlabel" for="name"> Name</label><br>
-      <input type="text" name="title" id="title"><label id="threadlabel" for="title"> Subject</label><br>
-      <textarea name="body" id="body"></textarea><label id="threadlabel" for="body"> Comment</label><br>
+      <input type="text" name="name" id="name" placeholder="Name"><br>
+      <input type="text" name="title" id="title" placeholder="Subject"><br>
+      <textarea name="body" id="body" placeholder="Comment"></textarea><br>
       <input type="file" name="image" accept="image/jpeg,image/png,image/gif">
       <input type="submit" name="submit" value="Post" style="float: right; margin-right: 50px;"><br><br>
     </form>
@@ -91,9 +78,7 @@ if (!is_file($threadlink)) {
           break;
       }
 
-      // Meta line
       if (str_starts_with($line, '[')) {
-          // Close previous post container (exact original spacing)
           if ($cnt !== 1) {
               if ($pastinclude === 1) {
                   echo '<br><br><br><br><br><br><br><br><br></div>';
@@ -110,8 +95,9 @@ if (!is_file($threadlink)) {
 
           echo '<div id="postcontainer">';
           if ($include !== '') {
-              echo '<span id="metadata">File: <a href="cdn/' . htmlspecialchars($include, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($include, ENT_QUOTES, 'UTF-8') . '</a></span><br>';
-              echo '<a href="cdn/' . htmlspecialchars($include, ENT_QUOTES, 'UTF-8') . '"><img id="thumb" style="vertical-align: top;" src="cdn/' . htmlspecialchars($include, ENT_QUOTES, 'UTF-8') . '" alt=""></a>';
+              $safe = htmlspecialchars($include, ENT_QUOTES, 'UTF-8');
+              // No "File: xxx" line – just the clickable image
+              echo '<a href="cdn/' . $safe . '"><img id="thumb" style="vertical-align: top;" src="cdn/' . $safe . '" alt=""></a>';
               $pastinclude = 1;
           } else {
               $pastinclude = 0;
@@ -120,19 +106,16 @@ if (!is_file($threadlink)) {
           echo '<span id="name">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '    </span>';
           echo '<span id="date">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '   </span>     <br><br>';
       }
-      // Body line starting with #
       elseif (str_starts_with($line, '#')) {
-          $content = substr($line, 1); // strip leading #
+          $content = substr($line, 1);
 
           if (str_starts_with($content, '>')) {
-              // Pure greentext
               echo '<span id="body"><span id="greentext">' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</span></span><br>';
               if ($firsttitle === 0) {
                   echo '<title>/krila/ - ' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</title>';
                   $firsttitle = 1;
               }
           } else {
-              // May contain greentext mid-line
               $arr = explode('>', $content, 2);
               if (count($arr) > 1) {
                   $plain = htmlspecialchars($arr[0], ENT_QUOTES, 'UTF-8');
@@ -151,7 +134,6 @@ if (!is_file($threadlink)) {
               }
           }
       }
-      // Rare continuation lines
       else {
           if (str_starts_with($line, '>')) {
               echo '<span id="body"><span id="greentext">' . htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . '</span></span><br>';
@@ -167,7 +149,7 @@ if (!is_file($threadlink)) {
           }
       }
   }
-  // Close the last open post container
+
   if ($cnt > 0) {
       if ($pastinclude === 1) {
           echo '<br><br><br><br><br><br><br><br><br></div>';

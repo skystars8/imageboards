@@ -1,30 +1,29 @@
-# Krila – updated for PHP 8.5+
+# Krila – PHP 8.5+ ready imageboard
 
-This is the original imageboard-style board modernised for the latest PHP (tested against 8.3–8.5 syntax & deprecations).
+Drop this folder anywhere (root or any subdirectory). Every path is relative, so each board can live in its own directory with its own `thread/`, `cdn/` and `static/`.
 
-## Changes made
-- `declare(strict_types=1);`
-- No undefined variables (all initialised / null-coalesced)
-- `pathinfo()` instead of `end(explode())`
-- Safe handling of missing `$_SERVER['HTTP_REFERER']`, `$_POST`, `$_FILES`
-- `str_starts_with` / `str_ends_with` (PHP 8.0+)
-- `htmlspecialchars` on output to avoid XSS
-- Proper upload error checking (`UPLOAD_ERR_*`)
-- Empty `thread/` directory no longer causes warnings
-- Tripcode generation still uses nested `crypt()` (salt always supplied → no PHP 8.4 notice)
+## Features restored / improved
+- **Newest threads on top** of the main board
+- **Pagination** on the index (10 threads per page, Previous / [1] [2] … / Next)
+- **Reply form** on every thread page (original layout + spacing restored)
+- **Images** correctly linked (`cdn/filename.ext` – no more `include=` bug)
+- Works in any subdirectory without configuration
 
 ## Directory layout
 ```
-krila/
+yourboard/
 ├── index.php
 ├── post.php
 ├── postcomment.php
 ├── thread.php
 ├── static/
 │   ├── krila.css
-│   └── logo.png          ← replace with your real logo
-├── thread/               ← empty; posts create .txt files here
-└── cdn/                  ← uploaded images land here
+│   └── logo.png          ← put your real logo here
+├── thread/               ← auto-created .txt files
+└── cdn/                  ← uploaded images
 ```
 
-Replace `static/logo.png` with the original logo.
+## PHP requirements
+PHP 8.3 – 8.5+ (strict_types, null-safe, pathinfo, str_starts_with, etc.)
+
+Just point a vhost or `php -S localhost:8000` at the folder and post.
