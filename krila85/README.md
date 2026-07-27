@@ -8,7 +8,9 @@ Drop this folder anywhere (root or any subdirectory). Every path is relative, so
 - **Reply form** on every thread page (original layout + spacing restored)
 - **Images** correctly linked (`cdn/filename.ext` – no more `include=` bug)
 - Works in any subdirectory without configuration
+- Click ion the post image to reply, in reply mode click in top board banner image to return to the main board. 
 
+  
 ## Directory layout
 ```
 yourboard/
