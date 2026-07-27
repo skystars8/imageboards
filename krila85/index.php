@@ -2,8 +2,35 @@
 declare(strict_types=1);
 
 /**
- * /krila/ index – compatible with PHP 8.5+
+ * /krila/ index – PHP 8.5+ compatible, original visual layout preserved
  */
+
+/**
+ * Extract meta fields safely (avoids the include= bug)
+ */
+function parse_meta_line(string $line): array
+{
+    $line = trim(str_replace(['[', ']'], '', $line));
+    $out = [
+        'name'    => '',
+        'date'    => '',
+        'title'   => '',
+        'include' => '',
+    ];
+    if (preg_match('/name="([^"]*)"/', $line, $m)) {
+        $out['name'] = $m[1];
+    }
+    if (preg_match('/date="([^"]*)"/', $line, $m)) {
+        $out['date'] = $m[1];
+    }
+    if (preg_match('/title="([^"]*)"/', $line, $m)) {
+        $out['title'] = $m[1];
+    }
+    if (preg_match('/include="([^"]*)"/', $line, $m)) {
+        $out['include'] = $m[1];
+    }
+    return $out;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,21 +56,22 @@ declare(strict_types=1);
   <?php
   $path = 'thread/';
   if (is_dir($path)) {
-      $threads = scandir($path, SCANDIR_SORT_DESCENDING) ?: [];
-      // Filter only .txt files and natural-sort numerically
-      $threads = array_values(array_filter($threads, static fn(string $f): bool =>
-          is_file($path . $f) && str_ends_with($f, '.txt')
-      ));
+      $raw = scandir($path) ?: [];
+      $threads = array_values(array_filter($raw, static function (string $f) use ($path): bool {
+          return is_file($path . $f) && str_ends_with($f, '.txt');
+      }));
+
+      // Natural sort then reverse → newest (highest number) first
       natsort($threads);
-      $threads = array_reverse($threads, false);
+      $threads = array_reverse(array_values($threads));
 
       $shown = 0;
       foreach ($threads as $threadFile) {
           if ($shown >= 10) {
               break;
           }
-          $full = $path . $threadFile;
-          $f = @fopen($full, 'r');
+
+          $f = @fopen($path . $threadFile, 'r');
           if ($f === false) {
               continue;
           }
@@ -51,16 +79,14 @@ declare(strict_types=1);
           $body = fgets($f) ?: '';
           fclose($f);
 
-          $metainformation = str_replace(['[', ']'], '', $metainformation);
-          $meta = explode(', ', $metainformation);
-
-          $name    = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'name="'], '', $meta[0] ?? '')));
-          $date    = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'date="'], '', $meta[1] ?? '')));
-          $title   = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'title="'], '', $meta[2] ?? '')));
-          $include = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'include="'], '', $meta[3] ?? '')));
-
+          $meta    = parse_meta_line($metainformation);
+          $name    = $meta['name'];
+          $date    = $meta['date'];
+          $title   = $meta['title'];
+          $include = $meta['include'];
           $threadId = str_replace('.txt', '', $threadFile);
 
+          // Exact original visual structure
           echo '<div id="main_postcontainer">';
           if ($include !== '') {
               echo '<span id="metadata">File: <a href="cdn/' . htmlspecialchars($include, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($include, ENT_QUOTES, 'UTF-8') . '</a></span><br>';
@@ -70,7 +96,7 @@ declare(strict_types=1);
           echo '<span id="name">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '    </span>';
           echo '<span id="date">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '   </span>';
           echo '<span id="postno">No. ' . htmlspecialchars($threadId, ENT_QUOTES, 'UTF-8') . '</span><br><br>';
-          echo '<span id="body">' . htmlspecialchars(str_replace('#', '', $body), ENT_QUOTES, 'UTF-8') . '</span><br>';
+          echo '<span id="body">' . htmlspecialchars(ltrim($body, '#'), ENT_QUOTES, 'UTF-8') . '</span><br>';
           echo '<a id="body" href="thread.php?=' . htmlspecialchars($threadId, ENT_QUOTES, 'UTF-8') . '">Show more</a><br><br><br><br><br><br><br><br><br>';
           echo '</div><hr>';
           $shown++;

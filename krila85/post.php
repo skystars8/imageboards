@@ -3,13 +3,14 @@ declare(strict_types=1);
 
 /**
  * Create a new thread – PHP 8.5+ compatible
+ * Newest threads appear at the top of the index.
  */
 
 $file_name = '';
-$errors = [];
+$errors    = [];
 
 if (isset($_FILES['image']) && is_array($_FILES['image'])) {
-    $file = $_FILES['image'];
+    $file          = $_FILES['image'];
     $file_name_raw = $file['name'] ?? '';
     $file_tmp      = $file['tmp_name'] ?? '';
     $file_error    = $file['error'] ?? UPLOAD_ERR_NO_FILE;
@@ -21,11 +22,10 @@ if (isset($_FILES['image']) && is_array($_FILES['image'])) {
         if (!in_array($file_ext, $allowed, true)) {
             $errors[] = 'extension not allowed, please choose a picture file.';
         } else {
-            // Keep original basename for compatibility with original behaviour
-            $file_name = basename($file_name_raw);
+            $file_name = basename($file_name_raw); // keep original name for compatibility
             $dest = 'cdn/' . $file_name;
             if (!move_uploaded_file($file_tmp, $dest)) {
-                $errors[] = 'failed to move uploaded file.';
+                $errors[]  = 'failed to move uploaded file.';
                 $file_name = '';
             } else {
                 echo 'Success';
@@ -35,8 +35,7 @@ if (isset($_FILES['image']) && is_array($_FILES['image'])) {
         $errors[] = 'upload error code: ' . $file_error;
     }
 } else {
-    // Original behaviour: still allow posting without an image
-    // (the "kys off fam" message is preserved for parity)
+    // Preserve original behaviour message
     echo 'kys off fam';
 }
 
@@ -48,10 +47,9 @@ if (!empty($errors)) {
 $name = 'Anonymous';
 if (isset($_POST['name']) && is_string($_POST['name']) && $_POST['name'] !== '') {
     $name = strip_tags($_POST['name']);
-    $arr = explode('#', $name, 2);
+    $arr  = explode('#', $name, 2);
     if (count($arr) > 1) {
-        // Nested crypt kept for original tripcode compatibility.
-        // crypt() is still present in PHP 8.5; salt is always supplied.
+        // Nested crypt kept for original tripcode compatibility (salt always supplied)
         $tripcode = crypt(
             crypt($arr[1], crypt('your', 'own')),
             crypt(phpversion(), 'hash')
@@ -66,33 +64,33 @@ $date  = date('m/d/y (D) H:i:s');
 
 $metainfo = '[name="' . $name . '", date="' . $date . '", title="' . $title . '", include="' . $file_name . '"]';
 
-// Determine next thread id safely
+// Safely find next thread id
 $threads = [];
 if (is_dir('thread/')) {
-    $raw = scandir('thread/', SCANDIR_SORT_DESCENDING) ?: [];
-    $threads = array_values(array_filter($raw, static fn(string $f): bool =>
-        is_file('thread/' . $f) && str_ends_with($f, '.txt')
-    ));
+    $raw = scandir('thread/') ?: [];
+    $threads = array_values(array_filter($raw, static function (string $f): bool {
+        return is_file('thread/' . $f) && str_ends_with($f, '.txt');
+    }));
     natsort($threads);
-    $threads = array_reverse($threads, false);
+    $threads = array_values($threads);
 }
 
 $latestthread = 0;
 if (!empty($threads)) {
-    $latestthread = (int) str_replace('.txt', '', $threads[0]);
+    $latestthread = (int) str_replace('.txt', '', $threads[array_key_last($threads)]);
 }
 $latestthread += 1;
 
 $filepath = 'thread/' . $latestthread . '.txt';
-$newthread_file = fopen($filepath, 'w+');
-if ($newthread_file === false) {
+$fh = fopen($filepath, 'w+');
+if ($fh === false) {
     http_response_code(500);
     exit('Could not create thread file');
 }
 
-fwrite($newthread_file, $metainfo . "\n");
-fwrite($newthread_file, '#' . $body . "\n");
-fclose($newthread_file);
+fwrite($fh, $metainfo . "\n");
+fwrite($fh, '#' . $body . "\n");
+fclose($fh);
 
 header('Location: thread.php?=' . $latestthread);
 exit;

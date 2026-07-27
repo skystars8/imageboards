@@ -2,8 +2,35 @@
 declare(strict_types=1);
 
 /**
- * View a single thread – PHP 8.5+ compatible
+ * View a single thread – PHP 8.5+ compatible, original reply layout restored
  */
+
+/**
+ * Extract meta fields safely
+ */
+function parse_meta_line(string $line): array
+{
+    $line = trim(str_replace(['[', ']'], '', $line));
+    $out = [
+        'name'    => '',
+        'date'    => '',
+        'title'   => '',
+        'include' => '',
+    ];
+    if (preg_match('/name="([^"]*)"/', $line, $m)) {
+        $out['name'] = $m[1];
+    }
+    if (preg_match('/date="([^"]*)"/', $line, $m)) {
+        $out['date'] = $m[1];
+    }
+    if (preg_match('/title="([^"]*)"/', $line, $m)) {
+        $out['title'] = $m[1];
+    }
+    if (preg_match('/include="([^"]*)"/', $line, $m)) {
+        $out['include'] = $m[1];
+    }
+    return $out;
+}
 
 // Original URLs look like thread.php?=123
 $id = '';
@@ -53,9 +80,9 @@ if (!is_file($threadlink)) {
       exit;
   }
 
-  $cnt = 0;
+  $cnt         = 0;
   $pastinclude = 0;
-  $firsttitle = 0;
+  $firsttitle  = 0;
 
   while (!feof($thread)) {
       $cnt++;
@@ -64,7 +91,9 @@ if (!is_file($threadlink)) {
           break;
       }
 
+      // Meta line
       if (str_starts_with($line, '[')) {
+          // Close previous post container (exact original spacing)
           if ($cnt !== 1) {
               if ($pastinclude === 1) {
                   echo '<br><br><br><br><br><br><br><br><br></div>';
@@ -73,13 +102,11 @@ if (!is_file($threadlink)) {
               }
           }
 
-          $metainformation = str_replace(['[', ']'], '', $line);
-          $meta = explode(', ', $metainformation);
-
-          $name    = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'name="'], '', $meta[0] ?? '')));
-          $date    = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'date="'], '', $meta[1] ?? '')));
-          $title   = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'title="'], '', $meta[2] ?? '')));
-          $include = trim(preg_replace('/\s\s+/', ' ', str_replace(['"', 'include="'], '', $meta[3] ?? '')));
+          $meta    = parse_meta_line($line);
+          $name    = $meta['name'];
+          $date    = $meta['date'];
+          $title   = $meta['title'];
+          $include = $meta['include'];
 
           echo '<div id="postcontainer">';
           if ($include !== '') {
@@ -92,23 +119,27 @@ if (!is_file($threadlink)) {
           echo '<span id="posttitle">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '    </span>';
           echo '<span id="name">' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '    </span>';
           echo '<span id="date">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '   </span>     <br><br>';
-      } elseif (str_starts_with($line, '#')) {
-          $content = substr($line, 1); // remove leading #
+      }
+      // Body line starting with #
+      elseif (str_starts_with($line, '#')) {
+          $content = substr($line, 1); // strip leading #
 
           if (str_starts_with($content, '>')) {
+              // Pure greentext
               echo '<span id="body"><span id="greentext">' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</span></span><br>';
               if ($firsttitle === 0) {
                   echo '<title>/krila/ - ' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</title>';
                   $firsttitle = 1;
               }
           } else {
+              // May contain greentext mid-line
               $arr = explode('>', $content, 2);
               if (count($arr) > 1) {
-                  $arr[1] = '<span id="greentext">>' . htmlspecialchars($arr[1], ENT_QUOTES, 'UTF-8') . '</span>';
-                  $res = htmlspecialchars($arr[0], ENT_QUOTES, 'UTF-8') . ' ' . $arr[1];
-                  echo '<span id="body">' . $res . '</span><br>';
+                  $plain = htmlspecialchars($arr[0], ENT_QUOTES, 'UTF-8');
+                  $green = '<span id="greentext">>' . htmlspecialchars($arr[1], ENT_QUOTES, 'UTF-8') . '</span>';
+                  echo '<span id="body">' . $plain . ' ' . $green . '</span><br>';
                   if ($firsttitle === 0) {
-                      echo '<title>/krila/ - ' . htmlspecialchars($arr[0], ENT_QUOTES, 'UTF-8') . '</title>';
+                      echo '<title>/krila/ - ' . $plain . '</title>';
                       $firsttitle = 1;
                   }
               } else {
@@ -119,20 +150,29 @@ if (!is_file($threadlink)) {
                   }
               }
           }
-      } else {
-          // Continuation lines (rare in original format)
+      }
+      // Rare continuation lines
+      else {
           if (str_starts_with($line, '>')) {
               echo '<span id="body"><span id="greentext">' . htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . '</span></span><br>';
           } else {
               $arr = explode('>', $line, 2);
               if (count($arr) > 1) {
-                  $arr[1] = '<span id="greentext">>' . htmlspecialchars($arr[1], ENT_QUOTES, 'UTF-8') . '</span>';
-                  $res = htmlspecialchars($arr[0], ENT_QUOTES, 'UTF-8') . ' ' . $arr[1];
-                  echo '<span id="body">' . $res . '</span>';
+                  $plain = htmlspecialchars($arr[0], ENT_QUOTES, 'UTF-8');
+                  $green = '<span id="greentext">>' . htmlspecialchars($arr[1], ENT_QUOTES, 'UTF-8') . '</span>';
+                  echo '<span id="body">' . $plain . ' ' . $green . '</span>';
               } else {
                   echo '<span id="body">' . htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . '</span><br>';
               }
           }
+      }
+  }
+  // Close the last open post container
+  if ($cnt > 0) {
+      if ($pastinclude === 1) {
+          echo '<br><br><br><br><br><br><br><br><br></div>';
+      } else {
+          echo '<br></div>';
       }
   }
   fclose($thread);

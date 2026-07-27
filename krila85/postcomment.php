@@ -3,18 +3,15 @@ declare(strict_types=1);
 
 /**
  * Reply to an existing thread – PHP 8.5+ compatible
+ * Replies are appended in chronological order.
  */
 
-// Extract thread id from Referer (original behaviour) or fall back to query
+// Extract thread id from Referer (original behaviour) with safe fallback
 $referer = $_SERVER['HTTP_REFERER'] ?? '';
-$arr = explode('=', $referer, 2);
-$id = $arr[1] ?? '';
-
-// Clean possible trailing path / query junk
-$id = preg_replace('/[^0-9]/', '', $id) ?? '';
+$arr     = explode('=', $referer, 2);
+$id      = preg_replace('/[^0-9]/', '', $arr[1] ?? '') ?? '';
 
 if ($id === '') {
-    // Last-resort: try QUERY_STRING style used by the rest of the board
     $qs = $_SERVER['QUERY_STRING'] ?? '';
     $id = preg_replace('/[^0-9]/', '', $qs) ?? '';
 }
@@ -25,10 +22,10 @@ if ($id === '') {
 }
 
 $file_name = '';
-$errors = [];
+$errors    = [];
 
 if (isset($_FILES['image']) && is_array($_FILES['image'])) {
-    $file = $_FILES['image'];
+    $file          = $_FILES['image'];
     $file_name_raw = $file['name'] ?? '';
     $file_tmp      = $file['tmp_name'] ?? '';
     $file_error    = $file['error'] ?? UPLOAD_ERR_NO_FILE;
@@ -43,7 +40,7 @@ if (isset($_FILES['image']) && is_array($_FILES['image'])) {
             $file_name = basename($file_name_raw);
             $dest = 'cdn/' . $file_name;
             if (!move_uploaded_file($file_tmp, $dest)) {
-                $errors[] = 'failed to move uploaded file.';
+                $errors[]  = 'failed to move uploaded file.';
                 $file_name = '';
             } else {
                 echo 'Success';
@@ -64,7 +61,7 @@ if (!empty($errors)) {
 $name = 'Anonymous';
 if (isset($_POST['name']) && is_string($_POST['name']) && $_POST['name'] !== '') {
     $name = strip_tags($_POST['name']);
-    $arr = explode('#', $name, 2);
+    $arr  = explode('#', $name, 2);
     if (count($arr) > 1) {
         $tripcode = crypt(
             crypt($arr[1], crypt('your', 'own')),
@@ -86,15 +83,15 @@ if (!is_file($filepath)) {
     exit('Thread not found');
 }
 
-$newthread_file = fopen($filepath, 'a');
-if ($newthread_file === false) {
+$fh = fopen($filepath, 'a');
+if ($fh === false) {
     http_response_code(500);
     exit('Could not open thread file');
 }
 
-fwrite($newthread_file, $metainfo . "\n");
-fwrite($newthread_file, '#' . $body . "\n");
-fclose($newthread_file);
+fwrite($fh, $metainfo . "\n");
+fwrite($fh, '#' . $body . "\n");
+fclose($fh);
 
 header('Location: thread.php?=' . $id);
 exit;
