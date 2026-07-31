@@ -1,5 +1,5 @@
 
-# this will be archived. only because personally, i am done with php. I love rust and use if for everything. here, x1 is a near genius 2 line imageboard. the html is pre made, it calls the 2 line php file upon posting, then writes right to the html file you posted from! That is clever. On the other end, the best one i have is chess1, a must check out for sure. EVEN BETTER maybe, is vichanBEST and tinyibBEST - ai really, seriously made them both awesome.   ITS BEEN REAL, PHP, BUT RUST DOES EVERYTHING FROM WEB APPS TO PC APPS TO RUNNING YOUR WASHING MACHINE COMPUTER. Php is easy, so is a hooker with a deadly std tho.
+
 
 
 
