@@ -1,8 +1,12 @@
 
+# Archived because i had a profound realization.
+
+Ai is actually so good now that it can make an ib using the very latest modern php ver where every line is strictly coded in the very latest php ver. As such, to make a totally modern, awesome board, start from scratch and make sure every line of code is in strict modern php ver standards only. It should NOT work on older php versions, that is okay and that is also proof that you are doing it right. Ai is so good that instead of telling it to modernize vichan or something, tell it to look at the looks and flow structure of vichan and re write it from scratch using strictly only the modern php version. As such, almost literally every single older php app should never be used again. Ai changed the world of php and it is awesome. 
 
 
 
 
+original readme :: 
 
 # Ridiculous PHP Imageboards (Modern)
 
