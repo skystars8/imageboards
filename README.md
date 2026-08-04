@@ -1,5 +1,11 @@
 
-# Archived because i had a profound realization.
+# imageboards
+
+The truth is that php is lame. It is a simple lang tho so ai can now do ANYTHING you want. For example, i took tinyib, tinyboard and vichan and told ai to fix them all and make sure its modern code- BAM. Done. It is sad that ai assistance came so late. Too late, in fact. With Rust or even go or zig web apps, it is just silly to use php or nodejs or something. Rust costs WAY less to run a high performance site for a year. Sure, you could spend lots of money and make a decent php site but that would not be cost effective. The same money could run a rust server that could handle 50x more traffic. 
+
+No one visits private sites nowadays anyway. Big tech did an awesome job at convincing everyone that every private site you go to will hack you. That and other factors made the world use about 10 sites, the rest are mostly graveyards. 
+
+Php is easy, but so is a hooker with a deadly std. If you take one thing away from this repo, let it be that. Ai can do anything with php nowadays. Newslash tho...ai can also make you web apps in rust that are far superior to php apps. 
 
 Ai is actually so good now that it can make an ib using the very latest modern php ver where every line is strictly coded in the very latest php ver. As such, to make a totally modern, awesome board, start from scratch and make sure every line of code is in strict modern php ver standards only. It should NOT work on older php versions, that is okay and that is also proof that you are doing it right. Ai is so good that instead of telling it to modernize vichan or something, tell it to look at the looks and flow structure of vichan and re write it from scratch using strictly only the modern php version. As such, almost literally every single older php app should never be used again. Ai changed the world of php and it is awesome. 
 
